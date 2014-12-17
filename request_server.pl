@@ -52,14 +52,17 @@ websocket '/listener/register' => sub {
 			$c->send("Recieved");
 		});
 
+	my $rid = Mojo::IOLoop->recurring(3 => sub {
+			$c->app->log->debug("ping $c->tx");
+			$c->tx->send('ping');
+		});
+
 	$c->on(finish => sub {
 			$c->app->log->debug("Client disconected");
 			delete $websocket_listeners->{$id};
+			Mojo::IOLoop->remove($rid);
 		});
 
-	Mojo::IOLoop->recurring(250 => sub {
-			$c->send("ping");
-		});
 };
 
 get '/open' => sub {
@@ -69,6 +72,7 @@ get '/open' => sub {
 };
 
 app->start;
+
 __DATA__
 
 @@ index.html.ep
