@@ -52,7 +52,7 @@ websocket '/listener/register' => sub {
 			$c->send("Recieved");
 		});
 
-	my $rid = Mojo::IOLoop->recurring(3 => sub {
+	my $rid = Mojo::IOLoop->recurring(250 => sub {
 			$c->app->log->debug("ping $c->tx");
 			$c->tx->send('ping');
 		});
