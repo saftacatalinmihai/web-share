@@ -38,7 +38,7 @@ get '/' => 'index';
 websocket '/listener/register' => sub {
 	my $c = shift;
 
-	$c->inactivity_timeout(300);
+	$c->inactivity_timeout(0);
 
   	# Opened
   	$c->app->log->debug('Client connected');
@@ -52,15 +52,15 @@ websocket '/listener/register' => sub {
 			$c->send("Recieved");
 		});
 
-	my $rid = Mojo::IOLoop->recurring(250 => sub {
-			$c->app->log->debug("ping $c->tx");
-			$c->tx->send('ping');
-		});
+#	my $rid = Mojo::IOLoop->recurring(250 => sub {
+#			$c->app->log->debug("ping $c->tx");
+#			$c->tx->send('ping');
+#		});
 
 	$c->on(finish => sub {
 			$c->app->log->debug("Client disconected");
 			delete $websocket_listeners->{$id};
-			Mojo::IOLoop->remove($rid);
+#			Mojo::IOLoop->remove($rid);
 		});
 
 };
