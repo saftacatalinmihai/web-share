@@ -94,7 +94,7 @@ __DATA__
 				console.log('pong recieved');
 			}
 		};
-		window.setInterval(function () { ws.send('ping') }, 300000);
+		window.setInterval(function () { ws.send('ping') }, 50000);
 		// window.setInterval(function () { ws.send('ping') }, 3000);
 		</script>
 	</body>
