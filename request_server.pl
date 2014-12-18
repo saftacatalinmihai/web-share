@@ -38,6 +38,7 @@ get '/' => 'index';
 websocket '/listener/register' => sub {
 	my $c = shift;
 
+	# Remove inactivity timeout
 	$c->inactivity_timeout(0);
 
   	# Opened
@@ -48,8 +49,8 @@ websocket '/listener/register' => sub {
 
 	$c->on(message => sub {
 			my ($c, $message) = @_;
-			say $message;
-			$c->send("Recieved");
+			$c->app->log->debug("Recieved: $message");
+			$c->send("pong") if $message eq 'ping';
 		});
 
 #	my $rid = Mojo::IOLoop->recurring(250 => sub {
@@ -84,14 +85,16 @@ __DATA__
 		var ws = new WebSocket('<%= url_for('listenerregister')->to_abs %>');
 		// Incoming messages
 		ws.onmessage = function(event) {
-			// var data = event.data.replace(/%/g, ".");
 			var data = event.data;
-			document.body.innerHTML += data + '<br/>';
-			if (data !== 'ping') {
+			if (data !== 'pong') {
 				console.log(data);
+				document.body.innerHTML += data + '<br/>';
 				window.open("http://"+data,  "_blank");
+			} else {
+				console.log('pong recieved');
 			}
 		};
+		window.setInterval(function () { ws.send('ping') }, 300000);
 		</script>
 	</body>
 </html>
