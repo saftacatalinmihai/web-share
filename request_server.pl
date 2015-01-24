@@ -11,7 +11,7 @@
 # REQUIREMENTS: ---
 #         BUGS: ---
 #        NOTES: ---
-#       AUTHOR: YOUR NAME (),
+#       AUTHOR: Safta Catalin Mihai ,
 # ORGANIZATION:
 #      VERSION: 1.0
 #      CREATED: 12/14/2014 06:57:25 PM
@@ -53,17 +53,10 @@ websocket '/listener/register' => sub {
 			$c->send("pong") if $message eq 'ping';
 		});
 
-#	my $rid = Mojo::IOLoop->recurring(250 => sub {
-#			$c->app->log->debug("ping $c->tx");
-#			$c->tx->send('ping');
-#		});
-
 	$c->on(finish => sub {
 			$c->app->log->debug("Client disconected");
 			delete $websocket_listeners->{$id};
-#			Mojo::IOLoop->remove($rid);
 		});
-
 };
 
 get '/open' => sub {
@@ -90,6 +83,7 @@ __DATA__
 				console.log(data);
 				document.body.innerHTML += data + '<br/>';
 				var href = "http://"+data 
+
 				window.location.href = href;
 				// window.open("http://"+data,  "_blank");
 			} else {
