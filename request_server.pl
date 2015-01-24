@@ -79,7 +79,7 @@ __DATA__
 @@ index.html.ep
 <!DOCTYPE html>
 <html>
-	<head><title>Echo</title></head>
+	<head><title>Web-Share</title></head>
 	<body>
 		<script>
 		var ws = new WebSocket('<%= url_for('listenerregister')->to_abs %>');
@@ -99,5 +99,6 @@ __DATA__
 		window.setInterval(function () { ws.send('ping') }, 50000);
 		// window.setInterval(function () { ws.send('ping') }, 3000);
 		</script>
+		<p>Listener registered, awaiting requests...</p>
 	</body>
 </html>
