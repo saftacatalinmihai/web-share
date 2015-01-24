@@ -89,7 +89,9 @@ __DATA__
 			if (data !== 'pong') {
 				console.log(data);
 				document.body.innerHTML += data + '<br/>';
-				window.open("http://"+data,  "_blank");
+				var href = "http://"+data 
+				window.location.href = href;
+				// window.open("http://"+data,  "_blank");
 			} else {
 				console.log('pong recieved');
 			}
