@@ -86,7 +86,7 @@ get '/open' => sub {
 		my $page_url_target = $c->param("target") ?  $c->param("target") : "new_tab";
 		$page_url_target = 'new_tab' if ( !($page_url_target  =~ /^(new_tab|iframe|replace)$/));
 
-		$c->app->log->debug("Open request for url: [$url_param], taget: [$page_url_target]");
+		$c->app->log->debug("Open request for url: [$url_param], on channel: [$ch], taget: [$page_url_target]");
 		send_json_listeners($ch, {url => $url_param, page_url_target => $page_url_target});
 		$c->render(text => $url_param);
 };
