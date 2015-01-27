@@ -137,15 +137,18 @@ __DATA__
 				console.log(url);
 				console.log(page_url_target);
 				document.body.innerHTML += url + '<br/>';
-				var href = "http://"+url
-
+				var href = "http://"+url;
+				
 				switch (page_url_target) {
 					case "new_tab":
 						window.open(href,  "_blank");
+						break;
 					case "replace":
 						window.location.href = href;
+						break;
 					case "iframe":
 						document.getElementsByTagName('iframe')[0].src = href;
+						break;
 				}
 
 			} else {
