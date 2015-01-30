@@ -37,6 +37,18 @@ sub send_json_listeners{
 	}
 }
 
+sub get_listener_count {
+	my $channel = shift;
+	return 0 if not defined $websocket_listeners->{$channel};
+	my $listener_count = keys %{$websocket_listeners->{$channel}};
+	return $listener_count;
+}
+
+sub refresh_listener_count_on_channel{
+	my $channel = shift;
+	send_json_listeners($channel, {listener_count => get_listener_count($channel)});
+}
+
 get '/' => sub {
 	my $c = shift;
 	$c->stash(ch => 'public');
@@ -45,6 +57,7 @@ get '/' => sub {
 
 get '/channel/*ch' => sub {
 		my $c = shift;
+		$c->stash(listener_count => get_listener_count($c->param('ch')) );
 		$c->render(template => 'index', format => 'html' );
 };
 
@@ -61,20 +74,31 @@ websocket '/listener/register/*channel' => sub {
 	$c->inactivity_timeout(0);
 
   	# Opened
-  	$c->app->log->debug("Client connected on channel $channel");
+  	$c->app->log->debug("Client connected on channel [$channel]");
 
+	# Save the tx to send messeges to it later
 	my $id = "$c->tx";
 	$websocket_listeners->{$channel}->{$id} = $c->tx;
 
 	$c->on(json => sub {
 		my ($c, $hash) = @_;
 		$c->app->log->debug("Recieved: $hash->{msg}");
+
+		# keepalive
 		$c->send({json => {msg => "pong"}}) if $hash->{msg} eq 'ping';
+
+		# Update all existing listeners to the new listener count on channel
+		if ( $hash->{msg} =~ /refresh_channel/) {
+			$c->app->log->debug("Sending listener count to listeners on channel [$channel]");
+			refresh_listener_count_on_channel($channel);
+		}
 	});
 
+	# Delete the reference to that listener and refresh the remaining ones with the new count
 	$c->on(finish => sub {
-			$c->app->log->debug("Client disconected from channel $channel");
+			$c->app->log->debug("Client disconected from channel [$channel]");
 			delete $websocket_listeners->{$channel}->{$id};
+			refresh_listener_count_on_channel($channel);
 		});
 };
 
@@ -122,42 +146,89 @@ __DATA__
 		</style>
 	</head>
 	<body>
-		<p> Channel:  <%= $ch %></p>
+
 		<div class='info'>
-
-		</div>
-		<iframe src="http://www.w3schools.com"></iframe>
+			<p>Listener registered, awaiting requests...</p>
+			<p> Channel:  <%= $ch %></p>
+			<p id='listener_count'> Listeners on channel: <%= $listener_count %> </p>
+ 		</div>
+		<iframe src=""></iframe>
 		<script>
-		var ws = new WebSocket('<%= url_for('listenerregister')->to_abs %>/<%= $ch %>');
-		// Incoming messages
-		ws.onmessage = function(event) {
-			var url = JSON.parse(event.data).url;
-			var page_url_target = JSON.parse(event.data).page_url_target;
-			if (url !== 'pong') {
-				console.log(url);
-				console.log(page_url_target);
-				document.body.innerHTML += url + '<br/>';
-				var href = "http://"+url;
-				
-				switch (page_url_target) {
-					case "new_tab":
-						window.open(href,  "_blank");
-						break;
-					case "replace":
-						window.location.href = href;
-						break;
-					case "iframe":
-						document.getElementsByTagName('iframe')[0].src = href;
-						break;
-				}
 
-			} else {
-				console.log('pong recieved');
-			}
-		};
-		window.setInterval(function () { ws.send(JSON.stringify({msg: 'ping'})) }, 50000);
-		// window.setInterval(function () { ws.send(JSON.stringify({msg: 'ping'}))}, 3000);
+			var ws = new WebSocket('<%= url_for('listenerregister')->to_abs %>/<%= $ch %>');
+
+			var set_callbacks = function() {
+				// Incoming messages
+				ws.onmessage = function(event) {
+
+					var msg = JSON.parse(event.data).msg;
+					var url = JSON.parse(event.data).url;
+					var listener_count = JSON.parse(event.data).listener_count;
+					var page_url_target = JSON.parse(event.data).page_url_target;
+
+
+					if ( (typeof listener_count !== 'undefined')) {
+						 document.getElementById("listener_count").innerHTML = "Listeners on channel: " + listener_count
+					}
+
+					if (typeof msg !== 'undefined') {
+						if ( msg === "pong" ) {
+							console.log('pong recieved');
+						}
+					}
+					if ( typeof url !== 'undefined') {
+						// console.log(url);
+						// console.log(page_url_target);
+						document.body.innerHTML += url + '<br/>';
+						var href = "http://"+url;
+
+						switch (page_url_target) {
+							case "new_tab":
+								window.open(href,  "_blank");
+								break;
+							case "replace":
+								window.location.href = href;
+								break;
+							case "iframe":
+								document.getElementsByTagName('iframe')[0].src = href;
+								break;
+						}
+					}
+				};
+
+				// Keepalive the server connection to this listener
+				window.setInterval(function () { ws.send(JSON.stringify({msg: 'ping'})) }, 50000);
+				//window.setInterval(function () { ws.send(JSON.stringify({msg: 'ping'}))}, 3000);
+
+				ws.onopen=function(){
+					ws.send(JSON.stringify({msg: 'refresh_channel'}));
+					// console.log("sent refresh request");
+				};
+
+				ws.onclose=function(){
+					// console.log("Closed");
+					var retry_ws_connect_with_timout = function( retrys_left ) {
+						// console.log("Retries left: " + retrys_left);
+						if (retrys_left != 0 ) {
+							// console.log("Attempting reconnect");
+							ws = new WebSocket('<%= url_for('listenerregister')->to_abs %>/<%= $ch %>');
+							set_callbacks(ws);
+							if (ws.readyState == 0 || ws.readyState == 1 ) {
+								// console.log("Connection reestablished");
+								return;
+							} else {
+								setTimeout(function(){
+									retry_ws_connect_with_timout(retrys_left - 1);
+								},3000);
+							}
+						}
+					};
+					retry_ws_connect_with_timout(10);
+					return;
+				}
+			};
+			set_callbacks(ws);
 		</script>
-		<p>Listener registered, awaiting requests...</p>
+
 	</body>
 </html>
