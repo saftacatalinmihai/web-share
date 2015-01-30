@@ -52,6 +52,7 @@ sub refresh_listener_count_on_channel{
 get '/' => sub {
 	my $c = shift;
 	$c->stash(ch => 'public');
+	$c->stash(listener_count => get_listener_count($c->param('ch')) );
 	$c->render(template => 'index', format => 'html');
 };
 
