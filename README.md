@@ -13,6 +13,8 @@ The idea is to open a page that registeres itself as a listener on a channel for
 - Public and private (user defined) channels
 - Allow for new tab or page replace operation
 
+
+ 
 ## API
 * GET /
   * This registeres the listener on the public channel.
@@ -26,3 +28,6 @@ The idea is to open a page that registeres itself as a listener on a channel for
         * ch ( optional ) - channel to send the request to
         * target ( optional ) - specifies how to open the requested url. 
           - The options for target are: new_tab|iframe|replace
+          
+## Issues:
+ - The default open requests the target new_tab, which is usually blocked on most browsers by default, or they ask the users weather to accept opening the page in a new tab. If the users accepts, new requests are ok
