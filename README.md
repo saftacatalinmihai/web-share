@@ -17,8 +17,10 @@ The idea is to open a page that registeres itself as a listener on a channel for
 * GET /
   * This registeres the listener on the public channel.
 * GET /channel/{user defined channel}
-    * Any alphanumeric characters and "/" in the user defined channel
+    * Registeres the listener on the specified channel 
+        * Any alphanumeric characters and "/" are alowed in the user defined channel
 * GET /open
+    * Sends the page open request to all listeners on a channel
     * Prameters
         * url - the requested url to open on the recieving listeners
         * ch ( optional ) - channel to send the request to
