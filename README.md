@@ -2,18 +2,25 @@
 
 Live Server: http://web-share.herokuapp.com/
 
-Web-Share is a simple web app that allows for sharing web pages from one device to another using only HTTP get methods.
-The idea is to open a page that registeres itself as a listener on a channel for new url open requests, and when a request comes, it will open the url either by replacing itself with the new page or open it in a new tab.
+Web-Share is a simple web app that allows for opening web pages from one device on another using only HTTP get methods.
+The idea is to open a page that registeres itself as a listener on a channel for new url open requests, and when a request comes, it will open the url.
+
+## Synopsys
+ - On a device open: http://web-share.heroku.com/channel/demo_channel
+ - On a different device open: http://web-share.heroku.com/open?ch=demo_channel&url=teslamotors.com
 
 ## Features
 - Public and private (user defined) channels
 - Allow for new tab or page replace operation
 
 ## API
-* /
-  * This registeres the listener on the public channel. 
-*  /channel/< user defined channel > 
-    * Any alphanumeric characters and "/"
-    
-
-TODO: finish this
+* GET /
+  * This registeres the listener on the public channel.
+* GET /channel/{user defined channel}
+    * Any alphanumeric characters and "/" in the user defined channel
+* GET /open
+    * Prameters
+        * url - the requested url to open on the recieving listeners
+        * ch ( optional ) - channel to send the request to
+        * target ( optional ) - specifies how to open the requested url. 
+          - The options for target are: new_tab|iframe|replace
